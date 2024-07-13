@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas>Your browser does not seem to support HTML canvas.</canvas>
+  </body>
+
+  <style>
+    body {
+      margin: 0;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background-color: black;
+    }
+  </style>
+
+  <script>
+    window.addEventListener(
+      "load",
+      function setupWebGL(evt) {
+        "use strict";
+
+        window.removeEventListener(evt.type, setupWebGL, false);
+
+        const canvas = document.querySelector("canvas");
+        const gl = canvas.getContext("webgl");
+
+        function step(timeStamp) {
+          gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+          gl.clearColor(0.0, 0.5, 0.0, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+
+          window.requestAnimationFrame(step);
+        }
+
+        window.requestAnimationFrame(step);
+      },
+      false
+    );
+  </script>
+</html>
