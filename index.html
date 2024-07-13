@@ -35,10 +35,100 @@
         const canvas = document.querySelector("canvas");
         const gl = canvas.getContext("webgl");
 
+        function createShader(sourceCode, type) {
+          const shader = gl.createShader(type);
+          gl.shaderSource(shader, sourceCode);
+          gl.compileShader(shader);
+
+          if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            const info = gl.getShaderInfoLog(shader);
+
+            const name = type === gl.VERTEX_SHADER ? "vertex" : "fragment";
+            throw `Could not compile WebGL ${name} shader. \n\n${info}`;
+          }
+
+          return shader;
+        }
+
+        function createProgram(vertexShader, fragmentShader) {
+          const program = gl.createProgram();
+
+          gl.attachShader(program, vertexShader);
+          gl.attachShader(program, fragmentShader);
+
+          gl.linkProgram(program);
+
+          if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            const info = gl.getProgramInfoLog(program);
+            throw `Could not compile WebGL program. \n\n${info}`;
+          }
+
+          return program;
+        }
+
+        const vertexShader = createShader(
+          `
+            attribute vec2 position;
+        
+            void main() {
+                gl_Position = vec4(position, -1, 1);
+            }
+          `,
+          gl.VERTEX_SHADER
+        );
+
+        const fragmentShader = createShader(
+          `
+            uniform mediump vec3 color;
+
+            void main() {
+                gl_FragColor = vec4(color, 1.0);
+            }
+          `,
+          gl.FRAGMENT_SHADER
+        );
+
+        const program = createProgram(vertexShader, fragmentShader);
+
+        const positions = [-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0];
+
+        const indices = [0, 1, 2, 2, 3, 0];
+
+        const planeBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, planeBuffer);
+
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(positions),
+          gl.STATIC_DRAW
+        );
+
+        const indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+        gl.bufferData(
+          gl.ELEMENT_ARRAY_BUFFER,
+          new Uint16Array(indices),
+          gl.STATIC_DRAW
+        );
+
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 2 * 4, 0);
+        gl.enableVertexAttribArray(0);
+
+        gl.useProgram(program);
+
+        const colorLocation = gl.getUniformLocation(program, "color");
+
         function step(timeStamp) {
           gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-          gl.clearColor(0.0, 0.5, 0.0, 1.0);
+          //   gl.clearColor(0.0, (timeStamp / 1000) % 1, 0.0, 1.0);
           gl.clear(gl.COLOR_BUFFER_BIT);
+
+          gl.uniform3f(colorLocation, 1.0, (timeStamp / 1000) % 1, 1.0);
+
+          const vertexCount = 6;
+          const type = gl.UNSIGNED_SHORT;
+          gl.drawElements(gl.TRIANGLES, vertexCount, type, 0);
 
           window.requestAnimationFrame(step);
         }
